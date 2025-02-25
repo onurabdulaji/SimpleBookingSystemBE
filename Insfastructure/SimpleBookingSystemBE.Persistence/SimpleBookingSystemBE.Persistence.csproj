@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Core\SimpleBookingSystemBE.Application\SimpleBookingSystemBE.Application.csproj" />
     <ProjectReference Include="..\..\Core\SimpleBookingSystemBE.Domain\SimpleBookingSystemBE.Domain.csproj" />
   </ItemGroup>
 
