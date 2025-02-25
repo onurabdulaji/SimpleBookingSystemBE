@@ -1,4 +1,7 @@
-﻿using SimpleBookingSystemBE.Application.Interfaces.ResourceInterface;
+﻿using Microsoft.EntityFrameworkCore;
+using SimpleBookingSystemBE.Application.Interfaces.ResourceInterface;
+using SimpleBookingSystemBE.Domain.Entities;
+using SimpleBookingSystemBE.Persistence.Context;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,5 +12,24 @@ namespace SimpleBookingSystemBE.Persistence.Repositories.ResourceRepositories
 {
     public class ResourceRepository : IResourceRepository
     {
+        private readonly AppDbContext _context;
+
+        public ResourceRepository(AppDbContext context)
+        {
+            _context = context;
+        }
+
+        public async Task<ICollection<Booking>> GetBookingsForResourceAsync(int resourceId, DateTime dateFrom, DateTime dateTo)
+        {
+            return await _context.Bookings
+            .Where(b => b.ResourceId == resourceId && b.DateFrom <= dateTo && b.DateTo >= dateFrom)
+            .ToListAsync();
+        }
+
+        public int GetTotalAvailableQuantity(int resourceId)
+        {
+            var resource = _context.Resources.Find(resourceId);
+            return resource?.Quantity ?? 0;
+        }
     }
 }

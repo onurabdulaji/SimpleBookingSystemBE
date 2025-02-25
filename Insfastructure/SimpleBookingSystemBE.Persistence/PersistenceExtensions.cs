@@ -4,6 +4,8 @@ using Microsoft.Extensions.DependencyInjection;
 using SimpleBookingSystemBE.Application.Interfaces;
 using SimpleBookingSystemBE.Application.Interfaces.BookingInterface;
 using SimpleBookingSystemBE.Application.Interfaces.ResourceInterface;
+using SimpleBookingSystemBE.Application.Services.CreateBooking.Interface;
+using SimpleBookingSystemBE.Application.Services.CreateBooking.Service;
 using SimpleBookingSystemBE.Persistence.Context;
 using SimpleBookingSystemBE.Persistence.Repositories;
 using SimpleBookingSystemBE.Persistence.Repositories.BookingRepositories;
@@ -23,6 +25,9 @@ namespace SimpleBookingSystemBE.Persistence
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             services.AddScoped<IResourceRepository, ResourceRepository>();
             services.AddScoped<IBookingRepository, BookingRepository>();
+            services.AddScoped<IBookingService, BookingService>();
+            services.AddScoped<IBookingConflictChecker, BookingConflictChecker>();
+            services.AddTransient<IBookingEmailService, BookingEmailService>();
 
         }
         public static void UseDatabaseSeeder(this IServiceProvider services)

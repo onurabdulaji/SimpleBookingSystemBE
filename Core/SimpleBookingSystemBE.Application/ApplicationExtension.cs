@@ -1,12 +1,9 @@
-﻿using FluentValidation.AspNetCore;
+﻿using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using SimpleBookingSystemBE.Application.Features.Slice.Bookings.CreateBooking.Validators;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SimpleBookingSystemBE.Application
 {
@@ -16,6 +13,7 @@ namespace SimpleBookingSystemBE.Application
         {
             services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(Assembly.GetExecutingAssembly()));
             services.AddFluentValidationAutoValidation();
+            services.AddValidatorsFromAssemblyContaining<CreateBookingCommandValidator>();
         }
     }
 }
