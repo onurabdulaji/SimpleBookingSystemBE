@@ -19,6 +19,19 @@ namespace SimpleBookingSystemBE.Persistence.Repositories.ResourceRepositories
             _context = context;
         }
 
+        public async Task<bool> DecreaseQuantityAsync(int resourceId, int quantity)
+        {
+            var resource = await _context.Resources.FindAsync(resourceId);
+            if (resource == null || resource.Quantity < quantity)
+            {
+                return false;
+            }
+
+            resource.Quantity -= quantity;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
         public async Task<ICollection<Booking>> GetBookingsForResourceAsync(int resourceId, DateTime dateFrom, DateTime dateTo)
         {
             return await _context.Bookings

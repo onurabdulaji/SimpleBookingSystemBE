@@ -6,5 +6,7 @@ namespace SimpleBookingSystemBE.Application.Interfaces.ResourceInterface
     {
         Task<ICollection<Booking>> GetBookingsForResourceAsync(int resourceId, DateTime dateFrom, DateTime dateTo);
         int GetTotalAvailableQuantity(int resourceId);
+        Task<bool> DecreaseQuantityAsync(int resourceId, int quantity); // Yeni metot
+
     }
 }
