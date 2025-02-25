@@ -15,17 +15,17 @@ namespace SimpleBookingSystemBE.Persistence.Seed
                     new Resource
                     {
                         Name = "Resource 1",
-                        Quantity = 500
+                        Quantity = 999
                     },
                     new Resource
                     {
                         Name = "Resource 2",
-                        Quantity = 500
+                        Quantity = 999
                     },
                     new Resource
                     {
                         Name = "Resource 3",
-                        Quantity = 500
+                        Quantity = 999
                     }
                 );
                 context.SaveChanges();
@@ -37,19 +37,19 @@ namespace SimpleBookingSystemBE.Persistence.Seed
                     new Booking
                     {
                         ResourceId = 1,
-                        BookedQuantity = 100,
+                        BookedQuantity = 1,
                         DateFrom = DateTime.Now.AddDays(1),
                         DateTo = DateTime.Now.AddDays(2)
                     }, new Booking
                     {
                         ResourceId = 2,
-                        BookedQuantity = 100,
+                        BookedQuantity = 1,
                         DateFrom = DateTime.Now.AddDays(1),
                         DateTo = DateTime.Now.AddDays(2)
                     }, new Booking
                     {
                         ResourceId = 3,
-                        BookedQuantity = 100,
+                        BookedQuantity = 1,
                         DateFrom = DateTime.Now.AddDays(1),
                         DateTo = DateTime.Now.AddDays(2)
                     }
