@@ -1,4 +1,5 @@
-﻿using SimpleBookingSystemBE.Application.Interfaces.ResourceInterface;
+﻿using SimpleBookingSystemBE.Application.Interfaces;
+using SimpleBookingSystemBE.Application.Interfaces.ResourceInterface;
 using SimpleBookingSystemBE.Application.Services.CreateBooking.Interface;
 using System;
 using System.Collections.Generic;
@@ -21,5 +22,6 @@ namespace SimpleBookingSystemBE.Application.Services.CreateBooking.Service
         {
             return await _resourceRepository.DecreaseQuantityAsync(resourceId, quantity);
         }
+
     }
 }

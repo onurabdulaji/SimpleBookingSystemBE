@@ -39,10 +39,18 @@ namespace SimpleBookingSystemBE.Persistence.Repositories.ResourceRepositories
             .ToListAsync();
         }
 
-        public int GetTotalAvailableQuantity(int resourceId)
+        public async Task<int> GetTotalAvailableQuantity(int resourceId)
         {
-            var resource = _context.Resources.Find(resourceId);
-            return resource?.Quantity ?? 0;
+            var resource = await _context.Resources.FindAsync(resourceId);
+            if (resource == null)
+            {
+                throw new InvalidOperationException("Resource not found.");
+            }
+            var totalBookedQuantity = await _context.Bookings
+            .Where(b => b.ResourceId == resourceId &&
+                        b.DateTo > DateTime.UtcNow)
+            .SumAsync(b => b.BookedQuantity);
+            return resource.Quantity - totalBookedQuantity;
         }
     }
 }

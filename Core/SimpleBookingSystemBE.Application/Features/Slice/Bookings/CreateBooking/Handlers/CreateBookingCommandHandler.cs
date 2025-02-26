@@ -1,6 +1,8 @@
 ﻿using MediatR;
 using SimpleBookingSystemBE.Application.Features.Slice.Bookings.CreateBooking.Commands;
+using SimpleBookingSystemBE.Application.Features.Slice.Bookings.CreateBooking.Validators;
 using SimpleBookingSystemBE.Application.Interfaces;
+using SimpleBookingSystemBE.Application.Interfaces.BookingInterface;
 using SimpleBookingSystemBE.Application.Interfaces.ResourceInterface;
 using SimpleBookingSystemBE.Application.Services.CreateBooking.Interface;
 using SimpleBookingSystemBE.Domain.Entities;
@@ -14,33 +16,50 @@ namespace SimpleBookingSystemBE.Application.Features.Slice.Bookings.CreateBookin
         private readonly IBookingConflictChecker _bookingConflictChecker;
         private readonly IBookingEmailService _bookingEmailService;
         private readonly IResourceManagementService _resourceManagementService;
+        private readonly CreateBookingCommandValidator _createBookingCommandValidator;
+        private readonly IBookingRepository _bookingRepository;
+        private readonly IResourceRepository _resourceRepository;
 
-        public CreateBookingCommandHandler(IRepository<Booking> repository, IBookingService bookingService, IBookingConflictChecker bookingConflictChecker, IBookingEmailService bookingEmailService, IResourceManagementService resourceManagementService)
+
+        public CreateBookingCommandHandler(IRepository<Booking> repository, IBookingService bookingService, IBookingConflictChecker bookingConflictChecker, IBookingEmailService bookingEmailService, IResourceManagementService resourceManagementService, CreateBookingCommandValidator createBookingCommandValidator, IBookingRepository bookingRepository, IResourceRepository resourceRepository)
         {
             _repository = repository;
             _bookingService = bookingService;
             _bookingConflictChecker = bookingConflictChecker;
             _bookingEmailService = bookingEmailService;
             _resourceManagementService = resourceManagementService;
+            _createBookingCommandValidator = createBookingCommandValidator;
+            _bookingRepository = bookingRepository;
+            _resourceRepository = resourceRepository;
         }
 
         public async Task Handle(CreateBookingCommand request, CancellationToken cancellationToken)
         {
-            // Gün bazlı rezervasyon kontrolü
-            bool canBook = await _bookingService.CanBookResourceAsync(request.ResourceId, request.DateFrom, request.DateTo, request.BookedQuantity);
-            if (!canBook)
+            var validationResult = await _createBookingCommandValidator.ValidateAsync(request);
+            if (!validationResult.IsValid)
             {
-                throw new InvalidOperationException("Requested resource is not available for the given dates and quantity.");
+                throw new InvalidOperationException($"Validation Error: {string.Join(", ", validationResult.Errors)}");
             }
 
-            // Genel çakışma kontrolü
-            var conflictResult = await _bookingConflictChecker.IsBookingConflictAsync(request.ResourceId, request.DateFrom, request.DateTo, request.BookedQuantity);
+            int availableQuantity = await _resourceRepository.GetTotalAvailableQuantity(request.ResourceId);
+
+            var existingBookings = await _bookingRepository.GetExistingBookingsAsync(request.ResourceId, request.DateFrom, request.DateTo);
+            int totalBookedQuantity = existingBookings.Sum(b => b.BookedQuantity);
+
+            if (request.BookedQuantity > availableQuantity)
+            {
+                throw new InvalidOperationException("Booking failed: Not enough resources available.");
+            }
+
+            var conflictResult = await _bookingConflictChecker.IsBookingConflictAsync(
+                request.ResourceId, request.DateFrom, request.DateTo, request.BookedQuantity
+            );
+
             if (conflictResult.IsConflict)
             {
-                throw new InvalidOperationException("Requested resource is not available due to an existing booking.");
+                throw new InvalidOperationException("Booking failed: The selected resource is already booked during this period.");
             }
 
-            // Rezervasyon işlemi
             var booking = new Booking
             {
                 ResourceId = request.ResourceId,
@@ -48,12 +67,13 @@ namespace SimpleBookingSystemBE.Application.Features.Slice.Bookings.CreateBookin
                 DateTo = request.DateTo,
                 BookedQuantity = request.BookedQuantity
             };
+
             await _repository.CreateAsync(booking);
 
             bool quantityDecreased = await _resourceManagementService.DecreaseQuantityAsync(request.ResourceId, request.BookedQuantity);
             if (!quantityDecreased)
             {
-                throw new InvalidOperationException("Failed to decrease resource quantity.");
+                throw new InvalidOperationException("Booking failed: Could not update resource quantity.");
             }
 
             await _bookingEmailService.SendBookingConfirmationConsoleEmailAsync(booking.Id);

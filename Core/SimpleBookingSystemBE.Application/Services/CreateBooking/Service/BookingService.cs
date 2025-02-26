@@ -26,7 +26,7 @@ namespace SimpleBookingSystemBE.Application.Services.CreateBooking.Service
                     .Where(b => b.DateFrom <= date && b.DateTo >= date)
                     .Sum(b => b.BookedQuantity);
 
-                int totalAvailableQuantity = _resourceRepository.GetTotalAvailableQuantity(resourceId);
+                int totalAvailableQuantity = await _resourceRepository.GetTotalAvailableQuantity(resourceId);
 
                 if (totalBookedQuantityForDay + requestedQuantity > totalAvailableQuantity)
                 {

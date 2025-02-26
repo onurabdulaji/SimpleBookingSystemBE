@@ -9,5 +9,6 @@ namespace SimpleBookingSystemBE.Application.Services.CreateBooking.Interface
     public interface IResourceManagementService
     {
         Task<bool> DecreaseQuantityAsync(int resourceId, int quantity);
+
     }
 }

@@ -28,6 +28,7 @@ namespace SimpleBookingSystemBE.Persistence
             services.AddScoped<IBookingService, BookingService>();
             services.AddScoped<IBookingConflictChecker, BookingConflictChecker>();
             services.AddTransient<IBookingEmailService, BookingEmailService>();
+            services.AddTransient<IResourceManagementService, ResourceManagementService>();
 
         }
         public static void UseDatabaseSeeder(this IServiceProvider services)

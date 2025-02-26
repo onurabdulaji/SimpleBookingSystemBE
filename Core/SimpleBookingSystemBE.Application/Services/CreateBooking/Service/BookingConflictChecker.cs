@@ -19,32 +19,33 @@ namespace SimpleBookingSystemBE.Application.Services.CreateBooking.Service
 
         public async Task<BookingConflictResult> IsBookingConflictAsync(int resourceId, DateTime startTime, DateTime endTime, int requestedQuantity)
         {
-            try
+            var existingBookings = await _resourceRepository.GetBookingsForResourceAsync(resourceId, startTime.Date, endTime.Date);
+
+            foreach (var booking in existingBookings)
             {
-                // Fetch existing bookings within the requested time frame
-                var existingBookings = await _resourceRepository.GetBookingsForResourceAsync(resourceId, startTime, endTime);
-
-                // Calculate the total booked quantity for the requested period
-                int totalBookedQuantity = existingBookings.Sum(b => b.BookedQuantity);
-
-                // Fetch the total available quantity for the resource
-                int totalAvailableQuantity = _resourceRepository.GetTotalAvailableQuantity(resourceId);
-
-                // Determine if the new booking would exceed the available quantity
-                bool isConflict = totalBookedQuantity + requestedQuantity > totalAvailableQuantity;
-
-                return new BookingConflictResult
+                if (booking.DateFrom.Date == startTime.Date &&
+                    booking.DateFrom < endTime &&
+                    startTime < booking.DateTo)
                 {
-                    IsConflict = isConflict,
-                    OverCapacityAmount = isConflict ? (totalBookedQuantity + requestedQuantity - totalAvailableQuantity) : 0
-                };
+                    return new BookingConflictResult
+                    {
+                        IsConflict = true,
+                        OverCapacityAmount = requestedQuantity
+                    };
+                }
             }
-            catch (Exception ex)
+            int totalAvailableQuantity = await _resourceRepository.GetTotalAvailableQuantity(resourceId);
+            int totalBookedQuantity = existingBookings.Sum(b => b.BookedQuantity);
+
+            bool isCapacityExceeded = totalBookedQuantity + requestedQuantity > totalAvailableQuantity;
+
+            return new BookingConflictResult
             {
-                // Handle exceptions, possibly logging them and rethrowing or returning an error result
-                throw new BookingConflictCheckerException("An error occurred while checking for booking conflicts.", ex);
-            }
+                IsConflict = isCapacityExceeded,
+                OverCapacityAmount = isCapacityExceeded ? (totalBookedQuantity + requestedQuantity - totalAvailableQuantity) : 0
+            };
         }
+
     }
 }
 
@@ -54,7 +55,3 @@ public class BookingConflictResult
     public int OverCapacityAmount { get; set; }
 }
 
-public class BookingConflictCheckerException : Exception
-{
-    public BookingConflictCheckerException(string message, Exception innerException) : base(message, innerException) { }
-}
